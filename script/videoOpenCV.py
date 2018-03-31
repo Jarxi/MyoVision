@@ -4,6 +4,7 @@ import urllib3
 import cognitive_face as CF
 from PIL import Image
 import operator
+
 HEIGHT = 720
 WIDTH = 1280
 cap = cv2.VideoCapture(0)
@@ -109,7 +110,7 @@ def main():
         if target == 'person':
             detectFace(frame)
         # detect emotion
-        elif target == 'emotion' and counter % 10 == 0:
+        elif target == 'emotion' and counter % 20 == 0:
             detectEmotion(frame)
             counter = 0
         # detect objects
