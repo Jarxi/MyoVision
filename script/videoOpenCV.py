@@ -26,9 +26,9 @@ def detectObject(image, target = 'person'):
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843,
                                  (300, 300), 127.5)
 
-    # pass the blob through the network and obtain the detections and
-    # predictions
-    # print("[INFO] computing object detections...")
+    '''
+    pass the blob through the network and obtain the detections andpredictions
+    '''
     net.setInput(blob)
     detections = net.forward()
 
