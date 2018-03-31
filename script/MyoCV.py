@@ -89,9 +89,8 @@ def detectFace(image):
 
 # vibrate the Myo band based on given interval
 def vibrate(myo, interval):
-    for i in range(3):
-        myo.vibrate("short")
-        time.sleep(float(interval))
+    myo.vibrate("short")
+    time.sleep(float(interval))
 
 def main():
     target = input("What do you want to find? ")
@@ -108,9 +107,13 @@ def main():
         # on connect
         if myo.connected:
             myo.vibrate("short")
-            myo.vibrate("short")
+            myo.vibrate("medium")
 
-        
+        while myo.pose != "fist": {} # wait for command
+
+        # start finding
+        myo.vibrate("short")
+        myo.vibrate("short")
 
         while cap.isOpened() and hub.running and myo.connected:
             ret, frame = cap.read()
@@ -125,7 +128,6 @@ def main():
 
         cap.release()
         cv2.destroyAllWindows()
-
 
     except KeyboardInterrupt:
         print("Quitting...")
