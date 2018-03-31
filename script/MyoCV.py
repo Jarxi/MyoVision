@@ -125,6 +125,9 @@ def main():
             cv2.imshow('frame',frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            if myo.pose == 'fingers_spread':
+                print("Quit finding")
+                break
 
         cap.release()
         cv2.destroyAllWindows()
