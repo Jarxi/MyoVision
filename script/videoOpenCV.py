@@ -1,10 +1,30 @@
 import numpy as np
 import cv2
-
-
+import urllib3
+import cognitive_face as CF
+from PIL import Image
+import operator
 HEIGHT = 720
 WIDTH = 1280
 cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(1)
+def detectEmotion(image):
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    KEY = '6f850447110646e68b24b1365173e344'
+    CF.Key.set(KEY)
+
+    BASE_URL = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0'  # Replace with your regional Base URL
+    CF.BaseUrl.set(BASE_URL)
+    # image = image.tostring()
+    image = Image.fromarray(image, 'RGB')
+    # img_url = 'https://raw.githubusercontent.com/Microsoft/Cognitive-Face-Windows/master/Data/detection1.jpg'
+    faces = CF.face.detect(image, face_id=True, landmarks=False, attributes='emotion')
+    for face in faces:
+        emotions = face['faceAttributes']['emotion']
+        emotion = max(emotions.items(), key=operator.itemgetter(1))[0]
+        print(emotion)
+
 
 def detectObject(image, target = 'person'):
     # initialize the list of class labels MobileNet SSD was trained to
@@ -19,7 +39,6 @@ def detectObject(image, target = 'person'):
     # load our serialized model from disk
     # print("[INFO] loading model...")
     net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", "MobileNetSSD_deploy.caffemodel")
-
 
     (h, w) = image.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843,
@@ -51,21 +70,20 @@ def detectObject(image, target = 'person'):
                 label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
                 cv2.rectangle(image, (startX, startY), (endX, endY),
                               COLORS[idx], 2)
-                # area = (endX - startX) * (endY - startY)
                 locateObject(startX, endX, startY, endY)
                 y = startY - 15 if startY - 15 > 15 else startY + 15
                 cv2.putText(image, label, (startX, y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
 
 def locateObject(startX, endX, startY, endY):
-    print(startX,endX,startY,endY)
+    # print(startX,endX,startY,endY)
     height = abs(startY - endY)
     width = abs(startX - endX)
     targetTopY = ((HEIGHT - height)/2)*0.8
     targetBotY = (HEIGHT - targetTopY)*1.2
     targetLeftX = ((WIDTH - width)/2)*0.8
     targetRightX = (WIDTH - targetLeftX)*1.2
-    print(targetLeftX,targetRightX,targetTopY,targetBotY)
+    # print(targetLeftX,targetRightX,targetTopY,targetBotY)
     if startX >= targetLeftX and endX <= targetRightX and startY >= targetTopY and endY <= targetBotY:
         print("center")
     else:
@@ -83,12 +101,21 @@ def detectFace(image):
 
 def main():
     target = input("What do you want to find? ")
+    counter = 0
     while(cap.isOpened()):
         ret, frame = cap.read()
+        # detect people's face
         if target == 'person':
             detectFace(frame)
-        detectObject(frame, target)
+        # detect emotion
+        elif target == 'emotion' and counter % 10 == 0:
+            detectEmotion(frame)
+            counter = 0
+        # detect objects
+        else:
+            detectObject(frame, target)
         cv2.imshow('frame',frame)
+        counter = counter + 1
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     cap.release()
