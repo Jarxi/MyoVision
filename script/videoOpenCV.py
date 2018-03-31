@@ -71,12 +71,12 @@ def detectObject(image, target = 'person'):
                 cv2.rectangle(image, (startX, startY), (endX, endY),
                               COLORS[idx], 2)
                 locateObject(startX, endX, startY, endY)
+                locateObject(image, startX, endX, startY, endY)
                 y = startY - 15 if startY - 15 > 15 else startY + 15
                 cv2.putText(image, label, (startX, y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
 
-def locateObject(startX, endX, startY, endY):
-    # print(startX,endX,startY,endY)
+def locateObject(image, startX, endX, startY, endY):
     height = abs(startY - endY)
     width = abs(startX - endX)
     targetTopY = ((HEIGHT - height)/2)*0.8
@@ -84,6 +84,7 @@ def locateObject(startX, endX, startY, endY):
     targetLeftX = ((WIDTH - width)/2)*0.8
     targetRightX = (WIDTH - targetLeftX)*1.2
     # print(targetLeftX,targetRightX,targetTopY,targetBotY)
+    cv2.rectangle(image,(int(targetLeftX),int(targetTopY)),(int(targetRightX),int(targetBotY)),(255,0,0),2)
     if startX >= targetLeftX and endX <= targetRightX and startY >= targetTopY and endY <= targetBotY:
         print("center")
     else:
