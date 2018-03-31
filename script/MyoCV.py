@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
-
+import myo as libmyo; libmyo.init("/Users/chenyihan/Desktop/USC/hackathon/LAHacks2018/FeelTheWorld/MyoSDK/myo.framework")
+import time
+import sys
 
 HEIGHT = 720
 WIDTH = 1280
@@ -51,11 +53,13 @@ def detectObject(image, target = 'person'):
                 cv2.rectangle(image, (startX, startY), (endX, endY),
                               COLORS[idx], 2)
                 # area = (endX - startX) * (endY - startY)
-                locateObject(image, startX, endX, startY, endY)
+                degree = locateObject(image, startX, endX, startY, endY)
                 y = startY - 15 if startY - 15 > 15 else startY + 15
                 cv2.putText(image, label, (startX, y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+                return degree
 
+# return 1 if in center, 0 if not
 def locateObject(image, startX, endX, startY, endY):
     print(startX,endX,startY,endY)
     height = abs(startY - endY)
@@ -65,11 +69,14 @@ def locateObject(image, startX, endX, startY, endY):
     targetLeftX = ((WIDTH - width)/2)*0.8
     targetRightX = (WIDTH - targetLeftX)*1.2
     print(targetLeftX,targetRightX,targetTopY,targetBotY)
+    # print out center box
     cv2.rectangle(image,(int(targetLeftX),int(targetTopY)),(int(targetRightX),int(targetBotY)),(255,0,0),2)
     if startX >= targetLeftX and endX <= targetRightX and startY >= targetTopY and endY <= targetBotY:
         print("center")
+        return 1
     else:
         print("not center")
+        return 0
 
 def detectFace(image):
     path = "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/cv2/data/haarcascade_frontalface_default.xml"
@@ -80,19 +87,52 @@ def detectFace(image):
         cv2.rectangle(image,(x,y),(x+w,y+h),(255,0,0),2)
         locateObject(x, x + w, y, y + h)
 
+# vibrate the Myo band based on given interval
+def vibrate(myo, interval):
+    for i in range(3):
+        myo.vibrate("short")
+        time.sleep(float(interval))
 
 def main():
     target = input("What do you want to find? ")
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        if target == 'person':
-            detectFace(frame)
-        detectObject(frame, target)
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
+
+    feed = libmyo.device_listener.Feed()
+    hub = libmyo.Hub()
+    hub.run(1000, feed)
+    try:
+        myo = feed.wait_for_single_device(timeout=10.0)  # seconds
+        if not myo:
+            print("No Myo connected after 10 seconds.")
+            sys.exit()
+
+        # on connect
+        if myo.connected:
+            myo.vibrate("short")
+            myo.vibrate("short")
+
+        
+
+        while cap.isOpened() and hub.running and myo.connected:
+            ret, frame = cap.read()
+            if target == 'person':
+                detectFace(frame)
+            degree = detectObject(frame, target)
+            if (degree):
+                vibrate(myo, 0.1)
+            cv2.imshow('frame',frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+    except KeyboardInterrupt:
+        print("Quitting...")
+    finally:
+        hub.shutdown()
+
+    
 
 main()
 

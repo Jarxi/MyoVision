@@ -21,7 +21,7 @@ try:
         myo.vibrate("short")
         myo.vibrate("short")
     while hub.running and myo.connected:
-        degree = raw_input("speed in float? ")
+        degree = input("speed in float? ")
         vibrate(degree)
 except KeyboardInterrupt:
     print("Quitting...")
