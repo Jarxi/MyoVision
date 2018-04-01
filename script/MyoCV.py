@@ -1,4 +1,8 @@
+from __future__ import print_function
 import numpy as np
+from os.path import join, dirname
+from watson_developer_cloud import SpeechToTextV1
+from watson_developer_cloud.websocket import RecognizeCallback
 import cv2
 import myo as libmyo; libmyo.init("/Users/chenyihan/Desktop/USC/hackathon/LAHacks2018/FeelTheWorld/MyoSDK/myo.framework")
 import time
@@ -13,6 +17,10 @@ from os import system
 HEIGHT = 720
 WIDTH = 1280
 
+speech_to_text = SpeechToTextV1(
+    username='1d91dc2b-0389-4993-86b4-89d8a1bf8d57',
+    password='zx4IBtfMN8TM',
+    url='https://stream.watsonplatform.net/speech-to-text/api')
 
 def detectObject(image, target = 'person'):
     # initialize the list of class labels MobileNet SSD was trained to
@@ -123,6 +131,42 @@ def detectEmotion(image):
         print(emotion)
         return emotion
 
+def record():
+    record_cmd = 'sox -b 32 -e unsigned-integer -r 96k -c 2 -d --clobber --buffer $((96000*2*10)) input.wav trim 0 5'
+    system(record_cmd)
+
+def getAudioText():
+    with open(join(dirname(__file__), 'input.wav'),
+          'rb') as audio_file:
+        result =  speech_to_text.recognize(
+                    audio=audio_file,
+                    content_type='audio/wav',
+                    timestamps=True,
+                    word_confidence=True)
+        str = ''
+        for obj in result['results']:
+            str += obj['alternatives'][0]['transcript']
+        return str
+
+def getTarget(myo):
+    system('say What do you want to find?')
+    myo.vibrate('short')
+    record()
+    rawText = getAudioText()
+    print(rawText)
+    if rawText.lower().find('bottle') != -1:
+        return 'bottle'
+    elif rawText.lower().find('emotion') != -1:
+        return 'emotion'
+    elif rawText.lower().find('spotify') != -1:
+        return 'spotify'
+    elif rawText.lower().find('itunes') != -1:
+        return 'itunes'
+    elif rawText.lower().find('power point') != -1:
+        return 'powerpoint'
+    else:
+        return ''
+
 def main():
 
     feed = libmyo.device_listener.Feed()
@@ -142,8 +186,10 @@ def main():
 
         while 1:
             cap = cv2.VideoCapture(0)
-            system('say What do you want to find?')
-            target = input("What do you want to find? ")
+            target = getTarget(myo)
+            print(target)
+
+            #target = input("What do you want to find? ")
             # for limiting emotion analysis rate
 
             if target == 'bottle':
@@ -211,17 +257,23 @@ def main():
                 subprocess.call(
                     ["/usr/bin/open", "-n", "-a", "/Applications/Spotify.app"]
                     )
+                return 1
             elif target == 'itunes':
                 system('say start itunes')
                 subprocess.call(
                     ["/usr/bin/open", "-n", "-a", "/Applications/iTunes.app"]
                     )
+                return 1
             elif target == 'powerpoint':
                 system('say start PowerPoint')
                 subprocess.call(
                     ["/usr/bin/open", "-n", "-a", "/Applications/Microsoft PowerPoint.app"]
                     )
+                return 1
+            else:
+                system('say Sorry, I can not understand')
     except KeyboardInterrupt:
+        system('say Thanks for using this program')
         print("Quitting...")
     finally:
         hub.shutdown()
