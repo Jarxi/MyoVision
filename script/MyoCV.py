@@ -13,6 +13,14 @@ from PIL import Image
 import operator
 import subprocess
 from os import system
+from io import BytesIO
+import io
+import requests
+import matplotlib.pyplot as plt
+from PIL import Image
+from matplotlib.patches import Polygon
+import scipy.misc
+import text
 
 HEIGHT = 720
 WIDTH = 1280
@@ -102,7 +110,6 @@ def detectFace(image, emotion, myo):
         cv2.putText(image, emotion, (x, y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
-
 # vibrate the Myo band based on given interval
 def vibrate(myo, interval):
     myo.vibrate("short")
@@ -164,6 +171,8 @@ def getTarget(myo):
         return 'itunes'
     elif rawText.lower().find('power point') != -1:
         return 'powerpoint'
+    elif rawText.lower().find('written') != -1:
+        return 'text'
     else:
         return ''
 
@@ -187,7 +196,6 @@ def main():
         while 1:
             cap = cv2.VideoCapture(0)
             target = getTarget(myo)
-            print(target)
 
             #target = input("What do you want to find? ")
             # for limiting emotion analysis rate
@@ -270,6 +278,17 @@ def main():
                     ["/usr/bin/open", "-n", "-a", "/Applications/Microsoft PowerPoint.app"]
                     )
                 return 1
+            elif target == 'text':
+                system('say Hold your fist to capture text')
+                while(cap.isOpened()):
+                    ret, frame = cap.read()
+                    cv2.imshow('frame',frame) # TODO: 
+                    cv2.waitKey(1)
+                    if (myo.pose == 'fist'):
+                        myo.vibrate('short')
+                        scipy.misc.imsave('output.jpg', frame)
+                        text.readText(frame)
+                        break
             else:
                 system('say Sorry, I can not understand')
     except KeyboardInterrupt:

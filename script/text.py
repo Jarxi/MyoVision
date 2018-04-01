@@ -5,6 +5,7 @@ import time
 import matplotlib.pyplot as plt
 from PIL import Image
 from matplotlib.patches import Polygon
+from os import system
 
 def readText(image):
     vision_base_url = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/"
@@ -34,7 +35,7 @@ def readText(image):
 
 
 
-    plt.figure(figsize=(15,15))
+    plt.figure(figsize=(10,10))
 
     # image= Image.open(BytesIO(requests.get(image_url).content))
     # image = Image.open(image_path)
@@ -52,4 +53,7 @@ def readText(image):
     _ = plt.axis("off")
 
     print(sentence)
+    sentence = 'say ' + sentence
+    system(sentence)
     plt.show()
+    return sentence
