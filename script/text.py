@@ -11,12 +11,9 @@ def readText(image):
     text_recognition_url = vision_base_url + "RecognizeText"
     subscription_key = "7951e4ef3388446bacf3ba76ecf48e8a"
 
-    output = io.BytesIO()
-    image.save(output, format='JPEG')
-    data = output.getvalue()
 
-    # image_path = 'images/handwritten_01.png'
-    # image_data = open(image_path, "rb").read()
+    image_path = 'output.jpg'
+    image_data = open(image_path, "rb").read()
 
     headers  = {'Ocp-Apim-Subscription-Key': subscription_key,
                 'Content-Type': "application/octet-stream"}

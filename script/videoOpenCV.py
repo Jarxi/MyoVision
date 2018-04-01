@@ -4,7 +4,8 @@ import urllib3
 import cognitive_face as CF
 from PIL import Image
 import operator
-
+import text
+import scipy.misc
 HEIGHT = 720
 WIDTH = 1280
 cap = cv2.VideoCapture(0)
@@ -107,6 +108,9 @@ def main():
     emotion = 'neutral'
     while(cap.isOpened()):
         ret, frame = cap.read()
+        scipy.misc.imsave('output.jpg', frame)
+        text.readText(frame)
+        break
         # detect people's face
         if target == 'emotion':
             detectFace(frame, emotion)
