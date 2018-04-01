@@ -22,11 +22,6 @@ def detectEmotion(image):
     # img_url = 'https://raw.githubusercontent.com/Microsoft/Cognitive-Face-Windows/master/Data/detection1.jpg'
     faces = CF.face.detect(img, face_id=True, landmarks=False, attributes='emotion')
     for face in faces:
-        faceRectangle = face['faceRectangle']
-        x = faceRectangle['left']
-        y = faceRectangle['top']
-        w = faceRectangle['width']
-        h = faceRectangle['height']
         emotions = face['faceAttributes']['emotion']
         emotion = max(emotions.items(), key=operator.itemgetter(1))[0]
         print(emotion)
