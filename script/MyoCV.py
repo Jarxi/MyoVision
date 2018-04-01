@@ -7,10 +7,12 @@ import urllib3
 import cognitive_face as CF
 from PIL import Image
 import operator
+import subprocess
+from os import system
 
 HEIGHT = 720
 WIDTH = 1280
-cap = cv2.VideoCapture(0)
+
 
 def detectObject(image, target = 'person'):
     # initialize the list of class labels MobileNet SSD was trained to
@@ -130,6 +132,7 @@ def main():
         myo = feed.wait_for_single_device(timeout=10.0)  # seconds
         if not myo:
             print("No Myo connected after 10 seconds.")
+            system('say No Myo connected after 10 seconds')
             sys.exit()
 
         # on connect
@@ -138,11 +141,15 @@ def main():
             myo.vibrate("medium")
 
         while 1:
+            cap = cv2.VideoCapture(0)
+            system('say What do you want to find?')
             target = input("What do you want to find? ")
             # for limiting emotion analysis rate
 
             if target == 'bottle':
                 #while myo.pose != "double_tap": {} # wait for command
+
+                system('say Start looking for bottle')
 
                 # start finding
                 myo.vibrate("short")
@@ -160,6 +167,7 @@ def main():
                         break
                     if myo.pose == 'double_tap':
                         print("Quit finding")
+                        system('say quit finding')
                         break
 
                 cap.release()
@@ -168,21 +176,22 @@ def main():
             elif target == 'emotion': 
                 counter = 0
                 emotion = 'neutral'
+                system('say start detecting emotion')
                 while(cap.isOpened()):
                     ret, frame = cap.read()
                     detectFace(frame, emotion, myo)
-                    if counter % 20 == 0:
+                    if counter % 15 == 0:
                         emotion = detectEmotion(frame)
                         counter = 0
                         if emotion == 'surprise' or emotion == 'anger':
                             myo.vibrate('long')
                             myo.vibrate('short')
                             myo.vibrate('long')
-                        elif emotion == 'netural' or emotion == 'contempt':
+                        elif emotion == 'neutral' or emotion == 'contempt':
                             myo.vibrate('short')
                             myo.vibrate('medium')
                             myo.vibrate('short')
-                        else:
+                        elif emotion == 'disgust' or emotion == 'fear' or emotion == 'sadness':
                             myo.vibrate('short')
                             myo.vibrate('medium')
                             myo.vibrate('medium')
@@ -190,9 +199,28 @@ def main():
                     counter = counter + 1
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
+                    if myo.pose == 'double_tap':
+                        print("Quit finding")
+                        system('say quit finding')
+                        break
 
                 cap.release()
                 cv2.destroyAllWindows()
+            elif target == 'spotify':
+                system('say start spotify')
+                subprocess.call(
+                    ["/usr/bin/open", "-n", "-a", "/Applications/Spotify.app"]
+                    )
+            elif target == 'itunes':
+                system('say start itunes')
+                subprocess.call(
+                    ["/usr/bin/open", "-n", "-a", "/Applications/iTunes.app"]
+                    )
+            elif target == 'powerpoint':
+                system('say start PowerPoint')
+                subprocess.call(
+                    ["/usr/bin/open", "-n", "-a", "/Applications/Microsoft PowerPoint.app"]
+                    )
     except KeyboardInterrupt:
         print("Quitting...")
     finally:
