@@ -193,9 +193,11 @@ def main():
             myo.vibrate("short")
             myo.vibrate("medium")
 
+        fail = 0
         while 1:
             cap = cv2.VideoCapture(0)
             target = getTarget(myo)
+            #target = 'spotify'
 
             #target = input("What do you want to find? ")
             # for limiting emotion analysis rate
