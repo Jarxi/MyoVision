@@ -18,13 +18,19 @@ def detectEmotion(image):
     BASE_URL = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0'  # Replace with your regional Base URL
     CF.BaseUrl.set(BASE_URL)
     # image = image.tostring()
-    image = Image.fromarray(image, 'RGB')
+    img = Image.fromarray(image, 'RGB')
     # img_url = 'https://raw.githubusercontent.com/Microsoft/Cognitive-Face-Windows/master/Data/detection1.jpg'
-    faces = CF.face.detect(image, face_id=True, landmarks=False, attributes='emotion')
+    faces = CF.face.detect(img, face_id=True, landmarks=False, attributes='emotion')
     for face in faces:
+        faceRectangle = face['faceRectangle']
+        x = faceRectangle['left']
+        y = faceRectangle['top']
+        w = faceRectangle['width']
+        h = faceRectangle['height']
         emotions = face['faceAttributes']['emotion']
         emotion = max(emotions.items(), key=operator.itemgetter(1))[0]
         print(emotion)
+        return emotion
 
 
 def detectObject(image, target = 'person'):
@@ -38,7 +44,6 @@ def detectObject(image, target = 'person'):
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
     # load our serialized model from disk
-    # print("[INFO] loading model...")
     net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", "MobileNetSSD_deploy.caffemodel")
 
     (h, w) = image.shape[:2]
@@ -71,7 +76,6 @@ def detectObject(image, target = 'person'):
                 label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
                 cv2.rectangle(image, (startX, startY), (endX, endY),
                               COLORS[idx], 2)
-                locateObject(startX, endX, startY, endY)
                 locateObject(image, startX, endX, startY, endY)
                 y = startY - 15 if startY - 15 > 15 else startY + 15
                 cv2.putText(image, label, (startX, y),
@@ -84,35 +88,36 @@ def locateObject(image, startX, endX, startY, endY):
     targetBotY = (HEIGHT - targetTopY)*1.2
     targetLeftX = ((WIDTH - width)/2)*0.8
     targetRightX = (WIDTH - targetLeftX)*1.2
-    # print(targetLeftX,targetRightX,targetTopY,targetBotY)
-    cv2.rectangle(image,(int(targetLeftX),int(targetTopY)),(int(targetRightX),int(targetBotY)),(255,0,0),2)
+    cv2.rectangle(image,(int(targetLeftX),int(targetTopY)),(int(targetRightX),int(targetBotY)),(255,144,0),2)
     if startX >= targetLeftX and endX <= targetRightX and startY >= targetTopY and endY <= targetBotY:
         print("center")
     else:
         print("not center")
 
-def detectFace(image):
+def detectFace(image, emotion):
     path = "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/cv2/data/haarcascade_frontalface_default.xml"
     face_cascade = cv2.CascadeClassifier(path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     for (x, y, w, h) in faces:
         cv2.rectangle(image,(x,y),(x+w,y+h),(255,0,0),2)
-        locateObject(x, x + w, y, y + h)
+        cv2.putText(image, emotion, (x, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        locateObject(image, x, x + w, y, y + h)
 
 
 def main():
     target = input("What do you want to find? ")
     counter = 0
+    emotion = 'neutral'
     while(cap.isOpened()):
         ret, frame = cap.read()
         # detect people's face
-        if target == 'person':
-            detectFace(frame)
-        # detect emotion
-        elif target == 'emotion' and counter % 20 == 0:
-            detectEmotion(frame)
-            counter = 0
+        if target == 'emotion':
+            detectFace(frame, emotion)
+            if counter%20 == 0:
+                emotion = detectEmotion(frame)
+                counter = 0
         # detect objects
         else:
             detectObject(frame, target)
